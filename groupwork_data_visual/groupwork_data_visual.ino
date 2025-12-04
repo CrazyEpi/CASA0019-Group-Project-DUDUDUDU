@@ -1,9 +1,41 @@
+// =======================
+// 库文件引入
+// =======================
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <WiFiNINA.h>        // MKR 1010 内置 Wi-Fi 库
+#include <PubSubClient.h>    // MQTT 客户端库
+
+// =======================
+// Wi-Fi 配置
+// =======================
+const char* ssid = "CE-Hub-Student";         // <<< 替换为您的 Wi-Fi 名称
+const char* password = "casa-ce-gagarin-public-service"; // <<< 替换为您的 Wi-Fi 密码
+int status = WL_IDLE_STATUS;
+
+// =======================
+// MQTT 配置 (基于您的图片)
+// =======================
+const char* mqtt_server = "mqtt.cetools.org";
+const int mqtt_port = 1884;
+const char* mqtt_user = "student";
+const char* mqtt_pass = "ce2021-mqtt-forget-whale";
+// Client ID 留空，Broker 将自动分配一个临时 ID
+
+// 定义要发布的主题 (Topics)
+const char* TOPIC_LOUDNESS = "student/ucfnjhe/project/loudness";
+const char* TOPIC_FREQUENCY = "student/ucfnjhe/project/frequency";
+const char* TOPIC_NOTE = "student/ucfnjhe/project/note";
+
+// 初始化 Wi-Fi 和 MQTT 客户端
+WiFiClient wifiClient; // 使用 WiFiNINA 的客户端
+PubSubClient mqttClient(wifiClient);
+
 
 // =======================
 // LCD
 // =======================
+// 请确保您的 LCD 地址是 0x27
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // =======================
@@ -22,7 +54,7 @@ int mode = 0;
 #define MIC_PIN A0
 
 // =======================
-// 7-segment pins (based on YOUR LED diagram)
+// 7-segment pins (基于您的 LED 图)
 // =======================
 // A B C D E F G DP
 int segPins[] = {2, 3, 4, 5, 6, 7, 8, 9};
@@ -55,6 +87,8 @@ unsigned long t_scan = 0;
 unsigned long t_loud = 0;
 unsigned long t_freq = 0;
 unsigned long t_wave = 0;
+unsigned long t_mqtt_publish = 0;
+const long PUBLISH_INTERVAL = 500; // 每 500ms 发布一次数据
 
 // =======================
 // Variables
@@ -75,6 +109,89 @@ byte barChar[8][8] = {
   {0,0,31,31,31,31,31,31},
   {0,31,31,31,31,31,31,31}
 };
+
+// =======================
+// 函数：连接 Wi-Fi (适用于 MKR 1010)
+// =======================
+void setup_wifi() {
+  Serial.println();
+  // 检查是否有 WiFi 模块
+  if (WiFi.status() == WL_NO_MODULE) {
+    Serial.println("Communication with WiFi module failed!");
+    lcd.clear();
+    lcd.print("WiFi ERROR");
+    while (true); 
+  }
+
+  // 尝试连接到 WPA/WPA2 网络
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Connecting:");
+    lcd.setCursor(0,1);
+    lcd.print(ssid);
+    
+    // 连接到网络
+    status = WiFi.begin(ssid, password);
+    delay(10000); 
+  }
+  
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("WiFi Connected!");
+  Serial.println("WiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  delay(1000); 
+}
+
+// =======================
+// 函数：连接/重连 MQTT (不使用 Client ID)
+// =======================
+void reconnect() {
+  while (!mqttClient.connected()) {
+    Serial.print("Attempting MQTT connection (No ID)...");
+    lcd.setCursor(0,0);
+    lcd.print("MQTT Connect...");
+    
+    // 连接时 Client ID 使用空字符串 ""
+    if (mqttClient.connect("", mqtt_user, mqtt_pass)) { 
+      Serial.println("connected (using temporary ID)");
+      lcd.setCursor(0,1);
+      lcd.print("Connected!");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" trying again in 5 seconds");
+      lcd.setCursor(0,1);
+      lcd.print("Failed. Retrying.");
+      delay(5000);
+    }
+  }
+  lcd.clear(); // 清屏准备进入主要显示模式
+}
+
+// =======================
+// 函数：发布数据到 MQTT
+// =======================
+void publishData() {
+    // 1. 发布响度 (Loudness)
+    char loudStr[4]; 
+    sprintf(loudStr, "%d", loudness);
+    mqttClient.publish(TOPIC_LOUDNESS, loudStr, true);
+
+    // 2. 发布频率 (Frequency) - 修正了 dtostrf 错误
+    // 使用 String(value, decimalPlaces) 构造函数
+    String freqString = String(freqValue, 2); 
+    mqttClient.publish(TOPIC_FREQUENCY, freqString.c_str(), true);
+    
+    // 3. 发布音符 (Note)
+    String note = freqToNote(freqValue);
+    mqttClient.publish(TOPIC_NOTE, note.c_str(), true); 
+}
+
 
 // =======================
 // Encoder read
@@ -102,7 +219,14 @@ void computeLoudness() {
     if (v > maxV) maxV = v;
     if (v < minV) minV = v;
   }
+  
+  // 1. 正常映射
   loudness = map(maxV - minV, 0, 512, 0, 99);
+  
+  // 2. 钳制结果：确保它不超过 99
+  if (loudness > 99) {
+    loudness = 99;
+  }
 }
 
 // =======================
@@ -184,12 +308,12 @@ void showFreqNote() {
   lcd.setCursor(0,0);
   lcd.print("Freq:");
   lcd.print(freqValue,0);
-  lcd.print("Hz    ");
+  lcd.print("Hz    ");
 
   lcd.setCursor(0,1);
   lcd.print("Note:");
   lcd.print(freqToNote(freqValue));
-  lcd.print("     ");
+  lcd.print("     ");
 }
 
 // =======================
@@ -211,9 +335,11 @@ void showWaveform() {
 // Setup
 // =======================
 void setup() {
+  Serial.begin(115200);
+
   lcd.init();
   lcd.backlight();
-
+  
   // Load custom chars
   for(int i=0;i<8;i++)
     lcd.createChar(i, barChar[i]);
@@ -227,13 +353,24 @@ void setup() {
   pinMode(ENC_CLK, INPUT_PULLUP);
   pinMode(ENC_DT, INPUT_PULLUP);
   pinMode(ENC_SW, INPUT_PULLUP);
+
+  // === MQTT/WiFi Setup ===
+  setup_wifi(); // 连接 Wi-Fi
+  mqttClient.setServer(mqtt_server, mqtt_port); // 设置 MQTT 服务器
 }
 
 // =======================
 // Loop
 // =======================
 void loop() {
+  // === MQTT/WiFi Loop ===
+  if (!mqttClient.connected()) {
+      reconnect();
+  }
+  // 保持 MQTT 客户端连接活跃
+  mqttClient.loop(); 
 
+  // === User Interface and Signal Processing ===
   readEncoder();
 
   // 7-seg scan every 2ms
@@ -259,5 +396,12 @@ void loop() {
     t_wave = millis();
     if(mode == 0) showFreqNote();
     else          showWaveform();
+  }
+
+  // === MQTT Publishing ===
+  // 定时发布数据到 MQTT
+  if (millis() - t_mqtt_publish >= PUBLISH_INTERVAL) {
+      t_mqtt_publish = millis();
+      publishData(); 
   }
 }

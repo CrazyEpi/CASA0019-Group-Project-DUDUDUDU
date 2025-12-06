@@ -268,24 +268,21 @@ void scan7Seg() {
   toggle = !toggle;
 }
 
-// [UPDATED] 增加了 Loudness 显示
 void showFreqNote() {
   lcd.setCursor(0,0);
   lcd.print("Freq:");
   lcd.print(freqValue,0);
   lcd.print("Hz     "); 
 
-  // 第二行显示 Note 和 Loudness
   lcd.setCursor(0,1);
   lcd.print("Note:");
   lcd.print(freqToNote(freqValue));
-  lcd.print("   "); // 清除 Note 后面的残留
+  lcd.print("   "); 
 
-  // 在固定位置 (第9格) 显示音量
   lcd.setCursor(9, 1);
   lcd.print("Vol:");
   lcd.print(loudness);
-  lcd.print(" "); // 清除残留位数
+  lcd.print(" "); 
 }
 
 void showWaveform() {

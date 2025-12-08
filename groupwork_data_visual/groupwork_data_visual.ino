@@ -38,7 +38,11 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 // Servo Configuration
 // =======================
 Servo loudServo;      
-#define SERVO_PIN 1  
+#define SERVO_PIN 1   
+
+// Servo Smoothing Variables
+float currentAngle = 0;   // Stores the current smoothed servo angle
+float smoothFactor = 0.1; // Smoothing factor (0.1 is good for classroom monitoring)
 
 // =======================
 // Encoder Pins & Variables
@@ -175,9 +179,18 @@ void publishData() {
 // Logic: Update Servo
 // =======================
 void updateServo() {
-  int angle = map(loudness, 0, 99, 0, 180);
-  angle = constrain(angle, 0, 180);
-  loudServo.write(angle);
+  // Map loudness (0-90 dB) to servo angle (0-180 degrees)
+  int targetAngle = map(loudness, 0, 90, 0, 180);
+  
+  // Constrain range to prevent physical damage
+  targetAngle = constrain(targetAngle, 0, 180);
+  
+  // 2. Exponential Smoothing Algorithm
+  // This creates a "damped" movement, making the needle less jittery and more readable.
+  currentAngle = (currentAngle * (1.0 - smoothFactor)) + (targetAngle * smoothFactor);
+
+  // 3. Write to Servo
+  loudServo.write((int)currentAngle);
 }
 
 // =======================
@@ -199,20 +212,26 @@ void readEncoder() {
 }
 
 // =======================
-// Logic: Loudness
+// Logic: Loudness (dB with Calibration)
 // =======================
 void computeLoudness() {
-  int maxV = 0, minV = 1023;
+  int maxV = 0, minV = 1024;
   unsigned long start = millis();
 
-  while (millis() - start < 30) {
+  while (millis() - start < 50) {
     int v = analogRead(MIC_PIN);
     if (v > maxV) maxV = v;
     if (v < minV) minV = v;
   }
   
-  loudness = map(maxV - minV, 0, 512, 0, 99);
-  if (loudness > 99) loudness = 99;
+  int amplitude = maxV - minV;
+
+  if (amplitude < 100) {
+    loudness = 40;
+  } 
+  else {
+    loudness = 20.0 * log10(amplitude) + 10;
+  }
 }
 
 // =======================

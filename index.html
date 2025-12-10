@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 1px;
+            padding: 1px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 70vw;
+            margin: 0 auto;
+        }
+
+        .title,
+        .footer {
+            grid-column: 1 / -1;
+            background-color: #89CFF0;
+            /* Baby Blue */
+            color: #fff;
+            padding-left: 10px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background-color: #B2D8D8;
+            /* Light Cyan */
+            color: #000;
+        }
+
+        .text-description {
+            word-wrap: break-word;
+            padding: 10px;
+        }
+
+        .media {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4px;
+            gap: 5px;
+        }
+
+        .footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            background-color: #88D8B0;
+            /* Mint Green */
+            color: #000;
+        }
+
+        .footer>div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        img,
+        video {
+            max-width: 75%;
+            height: auto;
+        }
+
+        a {
+            weight: bold;
+            color: #ffffff;
+        }
+
+        .title_content {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="grid-container">
+        <div class="title">
+            <h1>NoiseGuard</h1>
+        </div>
+        <div class="content">
+            <div class="text-description">
+
+
+                <p><span class="title_content">DATASET <br /></span> This Data Device uses real-time sound data
+                    collected from a microphone sensor, including loudness (dB) and pitch (Hz).
+                    The system also classifies the detected pitch into musical notes (e.g., C, D#, F).</p>
+
+                <p><span class="title_content">DATA DEVICE (Physical)<br /></span> The physical device visualizes sound
+                    loudness through a servo-controlled gauge that moves a pointer across
+                    green–yellow–red zones. In order to maintain a better learning environment and effectively reduce
+                    the noise in the learning area the dial is designed according to the "School Chapter" of the World
+                    Health Organization's "Guidelines for Community Noise". The green area represents the "Compliance
+                    Zone", with a sound level of 0 - 35 dB, which meets the standards, providing 100% speech clarity, no
+                    additional cognitive load on the brain, and is suitable for high-level learning. The
+                    yellow area is the "Interference/Compensation Zone", with a sound level of 35 - 50 dB, which is
+                    sub-optimal acoustically, with a damaged signal-to-noise ratio. Students need to use "executive
+                    functions" to filter out the noise,resulting in fatigue and memory decline. The red area is the
+                    "Disruption & Health Risk Zone", with a volume of 50 dB or above, causing information masking, loss
+                    of most speech information, and accompanied by the secretion of stress hormones, essentially
+                    interrupting the learning process. Loudness in dB is shown using dual 7-segment displays, while
+                    pitch and musical note are displayed on the LCD panel. This multi-layer physical feedback allows
+                    users to intuitively understand sound intensity and tone characteristics in real time.</p>
+
+                <p><span class="title_content">DATA DEVICE (Digital)<br /></span> The Digital Twin of the data device
+                    provides additional information.It consists of two main parts. The first part is the model of the
+                    physical device. In this model, the pointer on the dial will rotate like the physical
+                    device as the volume changes, and the exact volume number will be displayed below. The second part
+                    consists of a dashboard with four charts, including two ring charts and two line charts. The ring
+                    charts represent the exact volume and frequency, while the line charts show the volume and frequency
+                    of the past five samples.</p>
+
+                <p><span class="title_content">HOW TO<br /></span> Open the app and scan the dial of the physical
+                    device, and the AR digital twin will be displayed on the phone.</p>
+            </div>
+            <div class="media">
+                <img src="https://raw.githubusercontent.com/CrazyEpi/CASA0019-Group-Project-DUDUDUDU/main/device_photo.jpg?raw=true"
+                    alt="Image">
+                <video src="https://github.com/CrazyEpi/CASA0019-Group-Project-DUDUDUDU/blob/main/ARvideo.mp4?raw=true"
+                    controls></video>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="footer-title">
+                <h2>CE 2025 - 2026</h2>
+            </div>
+            <div class="group-name">
+                <p>Group DUDUDUDU</p>
+            </div>
+            <div class="github-link">
+                <a target=_blank href="https://github.com/CrazyEpi/CASA0019-Group-Project-DUDUDUDU">GitHub Link</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

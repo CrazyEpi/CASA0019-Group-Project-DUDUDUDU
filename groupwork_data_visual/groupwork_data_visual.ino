@@ -42,7 +42,7 @@ Servo loudServo;
 
 // Servo Smoothing Variables
 float currentAngle = 0;   // Stores the current smoothed servo angle
-float smoothFactor = 0.1; // Smoothing factor (0.1 is good for classroom monitoring)
+float smoothFactor = 0.5; // Smoothing factor (0.1 is good for classroom monitoring)
 
 // =======================
 // Encoder Pins & Variables
@@ -180,7 +180,7 @@ void publishData() {
 // =======================
 void updateServo() {
   // Map loudness (0-90 dB) to servo angle (0-180 degrees)
-  int targetAngle = map(loudness, 0, 90, 0, 180);
+  int targetAngle = map(loudness, 0, 80, 160, 0);
   
   // Constrain range to prevent physical damage
   targetAngle = constrain(targetAngle, 0, 180);
@@ -226,12 +226,7 @@ void computeLoudness() {
   
   int amplitude = maxV - minV;
 
-  if (amplitude < 100) {
-    loudness = 40;
-  } 
-  else {
-    loudness = 20.0 * log10(amplitude) + 10;
-  }
+  loudness = map(amplitude, 0, 1023, 20, 70);
 }
 
 // =======================
